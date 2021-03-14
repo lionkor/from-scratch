@@ -1,13 +1,20 @@
-#include <X11/X.h>
-#include <X11/Xlib.h>
+#define _GNU_SOURCE
+
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
+#include <X11/X.h>
+#include <X11/Xlib.h>
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glx.h>
+
+#define deg_to_rad(angledegrees) ((angledegrees) * M_PI / 180.0)
+#define rad_to_deg(angleradians) ((angleradians) * 180.0 / M_PI)
 
 #include "err.h"
 #include "mem.h"
@@ -19,32 +26,6 @@ enum {
     WIN_H = 600,
     WIN_BORDER = 0,
 };
-
-void DrawAQuad() {
-    log("redraw!");
-    glClearColor(1.0, 1.0, 1.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-1., 1., -1., 1., 1., 20.);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
-
-    glBegin(GL_QUADS);
-    {
-        glColor3f(1., 0., 0.);
-        glVertex3f(-.75, -.75, 0.);
-        glColor3f(0., 1., 0.);
-        glVertex3f(.75, -.75, 0.);
-        glColor3f(0., 0., 1.);
-        glVertex3f(.75, .75, 0.);
-        glColor3f(1., 1., 0.);
-        glVertex3f(-.75, .75, 0.);
-    }
-    glEnd();
-}
 
 typedef struct {
     int screen;
@@ -59,6 +40,63 @@ typedef struct {
     GLXContext glc;
 } XGLEnvironment;
 
+typedef struct {
+    struct {
+        double x;
+        double y;
+        double z;
+    } pos;
+    struct {
+        double r;
+        double g;
+        double b;
+    } color;
+    GLenum type;
+} Vertex;
+
+void gl_draw(Vertex* vertices, size_t n, XGLEnvironment* env) {
+    assert(vertices);
+    assert(n > 0);
+    assert(env);
+    glBegin(GL_QUADS);
+    {
+        for (size_t i = 0; i < n; ++i) {
+            Vertex* cur = &vertices[i];
+            glColor3f(cur->color.r, cur->color.g, cur->color.b);
+            glVertex3f(cur->pos.x, cur->pos.y, cur->pos.z);
+        }
+    }
+    glEnd();
+}
+
+void DrawAQuad(XGLEnvironment* env) {
+    static int f = 0;
+    glClearColor(1.0, 1.0, 1.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(50.0, (double)WIN_W / ((double)WIN_H), 0.01, 100.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
+    ++f;
+    glRotated((f % 360) * 2.0, 0., 1., 0.);
+
+    Vertex vertices[] = {
+        (Vertex) {
+            { -1, -1, -1 },
+            { 1, 0, 1 } },
+        (Vertex) {
+            { 2, 2, 1 },
+            { 1, 1, 0 } },
+        (Vertex) {
+            { 1, 2, -1 },
+            { 0, 1, 1 } },
+    };
+    gl_draw(vertices, sizeof(vertices), env);
+}
+
 static void main_loop(XGLEnvironment* env) {
     assert(env);
     XEvent event;
@@ -68,24 +106,18 @@ static void main_loop(XGLEnvironment* env) {
         if (XPending(env->display)) {
             XNextEvent(env->display, &event);
             switch (event.type) {
-
+            case KeyPress:
+                // fallthrough
             case ClientMessage:
                 shutdown = true;
                 break;
-            case KeyPress:
-                // fallthrough
-            case Expose: {
-                XGetWindowAttributes(env->display, env->window, &env->gwa);
-                glViewport(0, 0, env->gwa.width, env->gwa.height);
-                DrawAQuad();
-                glXSwapBuffers(env->display, env->window);
+            case Expose:
                 break;
-            }
             }
         }
         XGetWindowAttributes(env->display, env->window, &env->gwa);
         glViewport(0, 0, env->gwa.width, env->gwa.height);
-        DrawAQuad();
+        DrawAQuad(env);
         glXSwapBuffers(env->display, env->window);
     }
 }
