@@ -1,7 +1,7 @@
 OBJS := $(addprefix bin/objs/,$(notdir $(patsubst %.c,%.o,$(wildcard src/*.c))))
 CC=gcc
 CFLAGS = -Wall -Wextra --pedantic -g -std=c17 -fsanitize=undefined,address -fanalyzer
-LDFLAGS = `pkg-config x11 --libs` -lGL -lGLU
+LDFLAGS = `pkg-config x11 --libs` -lGL -lGLU -lm
 
 .PHONY: all clean
 
