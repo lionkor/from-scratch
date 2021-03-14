@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include <time.h>
 
 #include <X11/X.h>
@@ -13,10 +14,11 @@
 #include <GL/glu.h>
 #include <GL/glx.h>
 
-#define deg_to_rad(angledegrees) ((angledegrees) * M_PI / 180.0)
-#define rad_to_deg(angleradians) ((angleradians) * 180.0 / M_PI)
+#define deg_to_rad(angledegrees) ((angledegrees)*M_PI / 180.0)
+#define rad_to_deg(angleradians) ((angleradians)*180.0 / M_PI)
 
 #include "err.h"
+#include "format_obj.h"
 #include "mem.h"
 
 enum {
@@ -51,50 +53,26 @@ typedef struct {
         double g;
         double b;
     } color;
-    GLenum type;
 } Vertex;
 
-void gl_draw(Vertex* vertices, size_t n, XGLEnvironment* env) {
-    assert(vertices);
-    assert(n > 0);
+void gl_draw(Mesh* mesh, XGLEnvironment* env, GLenum type) {
+    assert(mesh);
     assert(env);
-    glBegin(GL_QUADS);
+    glBegin(type);
     {
-        for (size_t i = 0; i < n; ++i) {
-            Vertex* cur = &vertices[i];
-            glColor3f(cur->color.r, cur->color.g, cur->color.b);
-            glVertex3f(cur->pos.x, cur->pos.y, cur->pos.z);
+        for (size_t i = 0; i < mesh->vertex_count; ++i) {
+            MeshVertex* cur = &mesh->vertices[i];
+            glColor3f(cur->coords[0], 1.0, cur->coords[2]);
+            glVertex3f(cur->coords[0], cur->coords[1], cur->coords[2]);
         }
     }
     glEnd();
 }
 
 void DrawAQuad(XGLEnvironment* env) {
-    static int f = 0;
-    glClearColor(1.0, 1.0, 1.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(50.0, (double)WIN_W / ((double)WIN_H), 0.01, 100.0);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
-    ++f;
-    glRotated((f % 360) * 2.0, 0., 1., 0.);
 
-    Vertex vertices[] = {
-        (Vertex) {
-            { -1, -1, -1 },
-            { 1, 0, 1 } },
-        (Vertex) {
-            { 2, 2, 1 },
-            { 1, 1, 0 } },
-        (Vertex) {
-            { 1, 2, -1 },
-            { 0, 1, 1 } },
-    };
-    gl_draw(vertices, sizeof(vertices), env);
+
+
 }
 
 static void main_loop(XGLEnvironment* env) {
@@ -102,7 +80,25 @@ static void main_loop(XGLEnvironment* env) {
     XEvent event;
     // event loop
     bool shutdown = false;
+    struct timeval t;
+    Mesh mesh;
+    bool ok = parse_obj_file("test.obj", &mesh);
+    if (!ok) {
+        log("parsing failed");
+        exit(1); // FIXME
+    }
+    gettimeofday(&t, NULL);
     while (!shutdown) {
+        struct timeval new_t;
+        gettimeofday(&new_t, NULL);
+        double secs = (double)(new_t.tv_usec - t.tv_usec) / 1000000 + (double)(new_t.tv_sec - t.tv_sec);
+        t = new_t;
+        if (secs > 0) {
+            double fps = 1.0 / secs;
+            //log("fps: %f, frametime: %f", fps, secs);
+        } else {
+            log("fps: < 1");
+        }
         if (XPending(env->display)) {
             XNextEvent(env->display, &event);
             switch (event.type) {
@@ -117,7 +113,22 @@ static void main_loop(XGLEnvironment* env) {
         }
         XGetWindowAttributes(env->display, env->window, &env->gwa);
         glViewport(0, 0, env->gwa.width, env->gwa.height);
-        DrawAQuad(env);
+
+        static int f = 0;
+        glClearColor(1.0, 1.0, 1.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        gluPerspective(50.0, (double)WIN_W / ((double)WIN_H), 0.01, 100.0);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
+        ++f;
+        glRotated((f % 360) * 1., 0., 1., 0.);
+
+        gl_draw(&mesh, env, GL_TRIANGLES);
+
         glXSwapBuffers(env->display, env->window);
     }
 }
