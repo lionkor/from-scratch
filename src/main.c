@@ -7,24 +7,21 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include <X11/X.h>
-#include <X11/Xlib.h>
-
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glx.h>
-
 #define deg_to_rad(angledegrees) ((angledegrees)*M_PI / 180.0)
 #define rad_to_deg(angleradians) ((angleradians)*180.0 / M_PI)
 
 #include "err.h"
 #include "format_obj.h"
 #include "mem.h"
+#include "ogl.h"
 
 #define Array(x, t) \
     struct {        \
         t data[x];  \
     }
+
+// owning ptr
+char* g_filename = NULL;
 
 enum {
     WIN_X = 0,
@@ -34,74 +31,24 @@ enum {
     WIN_BORDER = 0,
 };
 
-typedef struct {
-    int screen;
-    Display* display;
-    Window root;
-    GLint* att;
-    XVisualInfo* vi;
-    Colormap cmap;
-    XSetWindowAttributes swa;
-    Window window;
-    XWindowAttributes gwa;
-    GLXContext glc;
-} XGLEnvironment;
-
-typedef struct {
-    struct {
-        double x;
-        double y;
-        double z;
-    } pos;
-    struct {
-        double r;
-        double g;
-        double b;
-    } color;
-} Vertex;
-
-void gl_draw_mesh(Mesh* mesh, XGLEnvironment* env, GLenum type) {
-    assert(mesh);
-    assert(env);
-    glBegin(type);
-    {
-        for (size_t i = 0; i < mesh->face_element_count; ++i) {
-            FaceElement* cur = &mesh->face_elements[i];
-            for (size_t k = 0; k < 3; ++k) {
-                MeshVertex* vert = &mesh->vertices[cur->indices[k] - 1];
-                // log("%lu,%lu: drawing %lf, %lf, %lf", i, k, vert->coords[0], vert->coords[1], vert->coords[2]);
-                glColor3f(vert->coords[0], vert->coords[1], vert->coords[2]);
-                glVertex3f(vert->coords[0], vert->coords[1], vert->coords[2]);
-            }
-        }
-    }
-    glEnd();
-}
-
 static void main_loop(XGLEnvironment* env) {
     assert(env);
     XEvent event;
     // event loop
     bool shutdown = false;
-    struct timeval t;
     Mesh mesh;
     bool ok = parse_obj_file("test.obj", &mesh);
     if (!ok) {
         log("parsing failed");
         exit(1); // FIXME
     }
-    gettimeofday(&t, NULL);
+    Mesh mesh2;
+    ok = parse_obj_file("test.obj", &mesh2);
+    if (!ok) {
+        log("parsing failed");
+        exit(1); // FIXME
+    }
     while (!shutdown) {
-        struct timeval new_t;
-        gettimeofday(&new_t, NULL);
-        double secs = (double)(new_t.tv_usec - t.tv_usec) / 1000000 + (double)(new_t.tv_sec - t.tv_sec);
-        t = new_t;
-        if (secs > 0) {
-            double fps = 1.0 / secs;
-            //log("fps: %f, frametime: %f", fps, secs);
-        } else {
-            log("fps: < 1");
-        }
         if (XPending(env->display)) {
             XNextEvent(env->display, &event);
             switch (event.type) {
@@ -124,11 +71,12 @@ static void main_loop(XGLEnvironment* env) {
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         gluPerspective(50.0, (double)WIN_W / ((double)WIN_H), 0.01, 100.0);
+        ++f;
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
-        ++f;
         glRotated((f % 360) * 1., 0., 1., 0.);
+        glTranslated(0, 0, 0);
 
         gl_draw_mesh(&mesh, env, GL_TRIANGLES);
 
@@ -191,8 +139,6 @@ static void deinit(XGLEnvironment* env) {
     XDestroyWindow(env->display, env->window);
     XCloseDisplay(env->display);
 }
-
-char* g_filename = NULL;
 
 int main(int argc, char* argv[argc]) {
     if (argc > 1) {
