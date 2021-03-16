@@ -41,15 +41,14 @@ bool read_entire_file(const char* filename, ByteBuffer* buf) {
     return true;
 }
 
-static inline FileNameList get_files_in_directory_recursive(const char* dir_path) {
+static inline void get_files_in_directory_recursive(FileNameList* files, const char* dir_path) {
     log("getting files in \"%s\"", dir_path);
     DIR* d;
     struct dirent* dir;
     d = opendir(dir_path);
     size_t dir_path_len = strlen(dir_path);
-    FileNameList files;
-    files.names = NULL;
-    files.size = 0;
+    files->names = NULL;
+    files->size = 0;
     char cwd_full[256];
     realpath(".", cwd_full);
     if (d) {
@@ -73,22 +72,20 @@ static inline FileNameList get_files_in_directory_recursive(const char* dir_path
                 size_t d_name_len = strlen(dir->d_name);
                 memcpy(next, dir->d_name, d_name_len);
                 next[d_name_len] = 0;
-                FileNameList list = get_files_in_directory(dirname_buf);
-                transfer_filenames(&files, &list);
+                get_files_in_directory_recursive(files, dirname_buf);
                 // make sure we deallocated properly (sanity check)
-                assert(list.names == NULL && list.size == 0);
             } else if (S_ISREG(st.st_mode)) {
-                add_filename(&files, dir_path, dir->d_name);
+                add_filename(files, dir_path, dir->d_name);
             }
         }
         closedir(d);
     }
-    return files;
 }
 
 FileNameList get_files_in_directory(const char* dir_path) {
     //change_directory(dir_path);
-    FileNameList list = get_files_in_directory_recursive(dir_path);
+    FileNameList list;
+    get_files_in_directory_recursive(&list, dir_path);
     //change_directory("..");
     return list;
 }

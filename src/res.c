@@ -69,6 +69,7 @@ typedef struct {
 } NamedBuffer;
 
 NamedBuffer* g_files = NULL;
+size_t g_files_count = 0;
 
 void init_resource_manager() {
     if (g_files) {
@@ -82,6 +83,7 @@ void init_resource_manager() {
         log("warning: resource folder \"%s\" is empty", folder);
     }
     g_files = allocate(list.size * sizeof(NamedBuffer));
+    g_files_count = list.size;
     for (size_t i = 0; i < list.size; ++i) {
         memcpy(g_files[i].name, list.names[i].bytes, list.names[i].size);
         bool ok = read_entire_file(g_files[i].name, &g_files[i].buf);
@@ -94,6 +96,19 @@ void init_resource_manager() {
 
 void deinit_resource_manager() {
     if (g_files) {
+        log("deallocating resources");
+        for (size_t i = 0; i < g_files_count; ++i) {
+            deallocate_byte_buffer(&g_files[i].buf);
+        }
         deallocate((void**)&g_files);
+    } else {
+        log("resource manager deinitializing, even though it is not initialized");
     }
+}
+
+ByteBuffer* get_resource(const char* name) {
+    assert(g_files);
+    for (size_t i = 0; i < g_files_count; ++i) {
+    }
+    return NULL;
 }

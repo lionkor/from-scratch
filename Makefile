@@ -1,5 +1,6 @@
 OBJS := $(addprefix bin/objs/,$(notdir $(patsubst %.c,%.o,$(wildcard src/*.c))))
-CFLAGS = -Wall -Wextra --pedantic -g -std=c17
+CC=gcc
+CFLAGS = -Wall -Wextra --pedantic -g -std=c17 -fsanitize=undefined,address -fanalyzer
 LDFLAGS = `pkg-config x11 --libs` -lGL -lGLU
 
 .PHONY: all clean
@@ -7,7 +8,7 @@ LDFLAGS = `pkg-config x11 --libs` -lGL -lGLU
 all: bin bin/objs bin/from_scratch
 
 bin/from_scratch: $(OBJS)
-	pushd bin/objs; $(CC) $(LDFLAGS) $(^F) -o ../from_scratch; popd
+	pushd bin/objs; $(CC) $(CFLAGS) $(LDFLAGS) $(^F) -o ../from_scratch; popd
 
 bin/objs/%.o: src/%.c
 	$(CC) $(CFLAGS) -c $^ -o $@

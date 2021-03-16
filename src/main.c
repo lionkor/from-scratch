@@ -145,22 +145,15 @@ int main(int argc, char* argv[argc]) {
         g_filename = argv[1];
     }
 
-    set_resource_folder("data/");
-    FileNameList list = get_files_in_directory("data");
-    for (size_t i = 0; i < list.size; ++i) {
-        log("-> %s", list.names[i].bytes);
-    }
-    //init_resource_manager();
-
-    return 0;
-
+    set_resource_folder("data");
+    init_resource_manager();
     XGLEnvironment* env = allocate(sizeof(XGLEnvironment));
-    log("initializing...");
     init(env);
     log("main loop...");
     main_loop(env);
     log("closing normally...");
     deinit(env);
     deallocate((void**)&env);
+    deinit_resource_manager();
     return 0;
 }
