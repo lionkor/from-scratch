@@ -3,8 +3,10 @@
 #include "err.h"
 #include "mem.h"
 
-NODISCARD bool read_entire_file(const char* filename, ByteBuffer* buf);
-
-void set_resource_folder(const char* folder_path, size_t folder_path_len);
+void set_resource_folder(const char* folder_path);
 const char* get_resource_folder();
-NODISCARD bool res_read_entire_file(const char* filename, ByteBuffer* buf);
+ByteBuffer make_res_path(const char* filename);
+
+void init_resource_manager();
+void deinit_resource_manager();
+ByteBuffer* get_resource(const char* name);

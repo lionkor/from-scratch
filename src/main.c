@@ -12,15 +12,16 @@
 
 #include "err.h"
 #include "format_obj.h"
+#include "io.h"
 #include "mem.h"
 #include "ogl.h"
+#include "res.h"
 
 #define Array(x, t) \
     struct {        \
         t data[x];  \
     }
 
-// owning ptr
 char* g_filename = NULL;
 
 enum {
@@ -143,6 +144,15 @@ int main(int argc, char* argv[argc]) {
     if (argc > 1) {
         g_filename = argv[1];
     }
+
+    set_resource_folder("data/");
+    FileNameList list = get_files_in_directory("data");
+    for (size_t i = 0; i < list.size; ++i) {
+        log("-> %s", list.names[i].bytes);
+    }
+    //init_resource_manager();
+
+    return 0;
 
     XGLEnvironment* env = allocate(sizeof(XGLEnvironment));
     log("initializing...");
