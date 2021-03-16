@@ -70,7 +70,9 @@ static inline FileNameList get_files_in_directory_recursive(const char* dir_path
                     dirname_buf[dir_path_len] = '/';
                     next += 1;
                 }
-                memcpy(next, dir->d_name, strlen(dir->d_name));
+                size_t d_name_len = strlen(dir->d_name);
+                memcpy(next, dir->d_name, d_name_len);
+                next[d_name_len] = 0;
                 FileNameList list = get_files_in_directory(dirname_buf);
                 transfer_filenames(&files, &list);
                 // make sure we deallocated properly (sanity check)
