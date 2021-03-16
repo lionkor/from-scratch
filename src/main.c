@@ -21,6 +21,11 @@
 #include "format_obj.h"
 #include "mem.h"
 
+#define Array(x, t) \
+    struct {        \
+        t data[x];  \
+    }
+
 enum {
     WIN_X = 0,
     WIN_Y = 0,
@@ -64,7 +69,7 @@ void gl_draw_mesh(Mesh* mesh, XGLEnvironment* env, GLenum type) {
             FaceElement* cur = &mesh->face_elements[i];
             for (size_t k = 0; k < 3; ++k) {
                 MeshVertex* vert = &mesh->vertices[cur->indices[k] - 1];
-                log("%lu,%lu: drawing %lf, %lf, %lf", i, k, vert->coords[0], vert->coords[1], vert->coords[2]);
+                // log("%lu,%lu: drawing %lf, %lf, %lf", i, k, vert->coords[0], vert->coords[1], vert->coords[2]);
                 glColor3f(vert->coords[0], vert->coords[1], vert->coords[2]);
                 glVertex3f(vert->coords[0], vert->coords[1], vert->coords[2]);
             }
@@ -187,10 +192,11 @@ static void deinit(XGLEnvironment* env) {
     XCloseDisplay(env->display);
 }
 
-int main(int argc, char** argv) {
-    if (argc != 1) {
-        log("%s takes no arguments.\n", argv[0]);
-        return 1;
+char* g_filename = NULL;
+
+int main(int argc, char* argv[argc]) {
+    if (argc > 1) {
+        g_filename = argv[1];
     }
 
     XGLEnvironment* env = allocate(sizeof(XGLEnvironment));
