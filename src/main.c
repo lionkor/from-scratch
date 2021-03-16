@@ -37,13 +37,12 @@ static void main_loop(XGLEnvironment* env) {
     // event loop
     bool shutdown = false;
     Mesh mesh;
-    bool ok = parse_obj_file("test.obj", &mesh);
-    if (!ok) {
-        log("parsing failed");
-        exit(1); // FIXME
+    bool ok;
+    if (g_filename) {
+        ok = parse_obj_file(g_filename, &mesh);
+    } else {
+        ok = parse_obj_file("test.obj", &mesh);
     }
-    Mesh mesh2;
-    ok = parse_obj_file("test.obj", &mesh2);
     if (!ok) {
         log("parsing failed");
         exit(1); // FIXME
