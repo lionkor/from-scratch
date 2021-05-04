@@ -18,3 +18,4 @@ typedef struct {
 } Mesh;
 
 bool parse_obj_file(const char* filename, Mesh* mesh);
+void deallocate_mesh(Mesh* mesh);

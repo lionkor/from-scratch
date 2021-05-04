@@ -161,3 +161,8 @@ bool parse_obj_file(const char* filename, Mesh* mesh) {
     }
     return true;
 }
+
+void deallocate_mesh(Mesh* mesh) {
+    deallocate((void**)&mesh->face_elements);
+    deallocate((void**)&mesh->vertices);
+}
