@@ -151,7 +151,7 @@ void change_directory(const char* dir) {
 void deallocate_filenames(FileNameList* list) {
     assert(list);
     for (size_t i = 0; i < list->size; ++i) {
-        free(list->names[i].bytes);
+        deallocate((void**)&list->names[i].bytes);
     }
-    free(list->names);
+    deallocate((void**)&list->names);
 }
