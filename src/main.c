@@ -122,7 +122,7 @@ static void init(XGLEnvironment* env) {
 
     // display the window
     XMapWindow(env->display, env->window);
-    XStoreName(env->display, env->window, "from_scratch");
+    XStoreName(env->display, env->window, "From Scratch!");
 
     env->glc = glXCreateContext(env->display, env->vi, NULL, GL_TRUE);
     glXMakeCurrent(env->display, env->window, env->glc);
