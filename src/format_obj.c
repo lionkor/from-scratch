@@ -62,7 +62,7 @@ static bool handle_vertex(FILE* file, Mesh* mesh) {
         // FIXME: we're assuming this just works, does it? check the return.
         vert->coords[i] = atof(maybe_number);
     }
-    log("parsed location %lf, %lf, %lf", vert->coords[0], vert->coords[1], vert->coords[2]);
+    // log("parsed location %lf, %lf, %lf", vert->coords[0], vert->coords[1], vert->coords[2]);
     return true;
 }
 
@@ -111,7 +111,7 @@ static bool handle_f(FILE* file, Mesh* mesh) {
         // FIXME: we're assuming this just works, does it? check the return.
         face_elem->indices[i] = (size_t)strtol(maybe_number, NULL, 10);
     }
-    log("parsed face element %lu, %lu, %lu", face_elem->indices[0], face_elem->indices[1], face_elem->indices[2]);
+    // log("parsed face element %lu, %lu, %lu", face_elem->indices[0], face_elem->indices[1], face_elem->indices[2]);
     return true;
 }
 

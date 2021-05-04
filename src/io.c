@@ -94,20 +94,18 @@ void add_filename(FileNameList* list, const char* directory, const char* filenam
     assert(list);
     assert(directory);
     assert(filename);
-    if (!list->names) {
-        list->size = 1;
-        list->names = allocate(sizeof(ByteBuffer));
-        assert(list->names);
-    } else {
-        list->size += 1;
-        bool ok = reallocate((void**)&list->names, list->size * (sizeof(ByteBuffer)));
-        assert(ok);
-    }
-    ByteBuffer* new_buf = &list->names[list->size - 1];
+
+    list->size += 1;
+    bool ok = reallocate((void**)&list->names, list->size * (sizeof(ByteBuffer)));
+    assert(ok);
+
     size_t dir_len = strlen(directory);
     size_t file_len = strlen(filename);
-    new_buf->size = dir_len + file_len + 2;
-    *new_buf = allocate_byte_buffer(new_buf->size); // +2 for / and \0
+    // allocate_byte_buffer(dir_len + file_len + 2); // +2 for / and \0
+    size_t size = dir_len + file_len + 2;
+    list->names[list->size - 1].size = size;
+    list->names[list->size - 1].bytes = allocate(size);
+    ByteBuffer* new_buf = &list->names[list->size - 1];
     memset(new_buf->bytes, 0, new_buf->size);
     memcpy(new_buf->bytes, directory, dir_len);
     // ensure '/'
