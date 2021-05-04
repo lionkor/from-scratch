@@ -19,6 +19,7 @@
 
 #include "err.h"
 #include "format_obj.h"
+#include "io.h"
 #include "mem.h"
 #include "ogl.h"
 #include "res.h"
@@ -141,7 +142,6 @@ int main(int argc, char** argv) {
         log("%s takes no arguments.\n", argv[0]);
         return 1;
     }
-
     set_resource_folder("data");
     init_resource_manager();
     XGLEnvironment* env = allocate(sizeof(XGLEnvironment));

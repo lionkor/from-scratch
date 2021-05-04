@@ -6,7 +6,7 @@ static atomic_size_t s_allocated = 0;
 
 void* allocate(size_t n) {
     assert(n > 0);
-    void* ptr = malloc(n);
+    void* ptr = calloc(1, n);
     if (!ptr) {
         log_perror("malloc");
         return ptr;
@@ -53,7 +53,7 @@ bool safe_reallocate(OwnPtr* ownptr, size_t new_size) {
 }
 
 ByteBuffer allocate_byte_buffer(size_t n) {
-    return (ByteBuffer){ allocate(n), n };
+    return (ByteBuffer) { allocate(n), n };
 }
 
 void deallocate_byte_buffer(ByteBuffer* buf) {

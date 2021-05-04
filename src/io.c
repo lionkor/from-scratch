@@ -47,8 +47,6 @@ static inline void get_files_in_directory_recursive(FileNameList* files, const c
     struct dirent* dir;
     d = opendir(dir_path);
     size_t dir_path_len = strlen(dir_path);
-    files->names = NULL;
-    files->size = 0;
     char cwd_full[256];
     realpath(".", cwd_full);
     if (d) {
@@ -84,7 +82,7 @@ static inline void get_files_in_directory_recursive(FileNameList* files, const c
 
 FileNameList get_files_in_directory(const char* dir_path) {
     //change_directory(dir_path);
-    FileNameList list;
+    FileNameList list = { NULL, 0 };
     get_files_in_directory_recursive(&list, dir_path);
     //change_directory("..");
     return list;
@@ -153,7 +151,7 @@ void change_directory(const char* dir) {
 void deallocate_filenames(FileNameList* list) {
     assert(list);
     for (size_t i = 0; i < list->size; ++i) {
-        deallocate_byte_buffer(&list->names[i]);
+        free(list->names[i].bytes);
     }
-    deallocate((void**)&list->names);
+    free(list->names);
 }
