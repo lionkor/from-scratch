@@ -1,39 +1,35 @@
 #include "format_obj.h"
 #include "mem.h"
+#include "res.h"
 #include <assert.h>
 #include <ctype.h>
 
-static void skip_line(FILE* file) {
-    // log("skipping a line");
-    while (!feof(file) && !ferror(file)) {
-        if (fgetc(file) == '\n') {
-            break;
-        }
-    }
+static void skip_line(ByteBuffer* file, size_t* i) {
+    //log("skipping a line");
+    for (; file->bytes[*i] != '\n'; ++*i)
+        ;
 }
 
 static char buf[16];
 // result invalidated on the next call
-static char* read_until_space(FILE* file, size_t* len) {
+static char* read_until_space(ByteBuffer* filebuf, size_t* i, size_t* len) {
+    assert(filebuf);
+    assert(i);
     assert(len);
+    *len = 0;
     // zero allocation
     memset(buf, 0, sizeof(buf));
-    // read until space, error, eof, or newline
-    size_t i = 0;
-    while (!feof(file) && !ferror(file)) {
-        char c = (char)fgetc(file);
-        if (isspace(c)) {
-            break;
-        } else {
-            buf[i] = c;
-            ++i;
-        }
+    // read until space or newline
+    ++*i;
+    while (!isspace(filebuf->bytes[*i])) {
+        buf[*len] = (char)filebuf->bytes[*i];
+        ++*len;
+        ++*i;
     }
-    *len = i;
     return buf;
 }
 
-static bool handle_vertex(FILE* file, Mesh* mesh) {
+static bool handle_vertex(ByteBuffer* filebuf, size_t* i, Mesh* mesh) {
     // format:
     //  v %X %Y %Z %W
     // where %W is optional.
@@ -52,25 +48,25 @@ static bool handle_vertex(FILE* file, Mesh* mesh) {
     }
     // select last vertex
     MeshVertex* vert = &mesh->vertices[mesh->vertex_count - 1];
-    for (size_t i = 0; i < 3; ++i) {
+    for (size_t k = 0; k < 3; ++k) {
         size_t maybe_number_len;
-        char* maybe_number = read_until_space(file, &maybe_number_len);
+        char* maybe_number = read_until_space(filebuf, i, &maybe_number_len);
         if (maybe_number_len == 0) {
-            log("expected vertex number %lu, got eof, error, space or similar instead", i);
+            log("expected vertex number %lu, got eof, error, space or similar instead", k);
             return false;
         }
         // FIXME: we're assuming this just works, does it? check the return.
-        vert->coords[i] = atof(maybe_number);
+        vert->coords[k] = atof(maybe_number);
     }
-    // log("parsed location %lf, %lf, %lf", vert->coords[0], vert->coords[1], vert->coords[2]);
+    //log("parsed location %lf, %lf, %lf", vert->coords[0], vert->coords[1], vert->coords[2]);
     return true;
 }
 
-static bool handle_v(FILE* file, Mesh* mesh) {
-    char c = (char)fgetc(file);
+static bool handle_v(ByteBuffer* filebuf, size_t* i, Mesh* mesh) {
+    char c = (char)filebuf->bytes[++(*i)];
     switch (c) {
     case ' ':
-        return handle_vertex(file, mesh);
+        return handle_vertex(filebuf, i, mesh);
     case 'n':
     case 't':
         // not handled
@@ -82,8 +78,8 @@ static bool handle_v(FILE* file, Mesh* mesh) {
     return true;
 }
 
-static bool handle_f(FILE* file, Mesh* mesh) {
-    char should_be_space = fgetc(file);
+static bool handle_f(ByteBuffer* filebuf, size_t* i, Mesh* mesh) {
+    char should_be_space = (char)filebuf->bytes[++(*i)];
     if (should_be_space != ' ') {
         log("expected space, got %c (%d)", should_be_space, should_be_space);
         return false;
@@ -101,17 +97,19 @@ static bool handle_f(FILE* file, Mesh* mesh) {
     }
     // select last vertex
     FaceElement* face_elem = &mesh->face_elements[mesh->face_element_count - 1];
-    for (size_t i = 0; i < 3; ++i) {
+    for (size_t k = 0; k < 3; ++k) {
         size_t maybe_number_len;
-        char* maybe_number = read_until_space(file, &maybe_number_len);
+        char* maybe_number = read_until_space(filebuf, i, &maybe_number_len);
         if (maybe_number_len == 0) {
-            log("expected vertex number %lu, got eof, error, space or similar instead", i);
+            log("expected vertex number %lu, got eof, error, space or similar instead", k);
             return false;
         }
         // FIXME: we're assuming this just works, does it? check the return.
-        face_elem->indices[i] = (size_t)strtol(maybe_number, NULL, 10);
+        char* end;
+        face_elem->indices[k] = (size_t)strtol(maybe_number, &end, 10);
+        //log("%p, %p", maybe_number, end);
     }
-    // log("parsed face element %lu, %lu, %lu", face_elem->indices[0], face_elem->indices[1], face_elem->indices[2]);
+    //log("parsed face element %lu, %lu, %lu", face_elem->indices[0], face_elem->indices[1], face_elem->indices[2]);
     return true;
 }
 
@@ -120,19 +118,19 @@ bool parse_obj_file(const char* filename, Mesh* mesh) {
     assert(filename);
     assert(mesh);
     memset(mesh, 0, sizeof(Mesh));
-    FILE* file = fopen(filename, "r");
-    if (!file) {
-        log_perror("fopen");
+    ByteBuffer* filebuf = get_resource(filename);
+    if (!filebuf || filebuf->size == 0) {
+        log("file \"%s\" isn't a good obj file.", filename);
         return false;
     }
-    while (!feof(file) && !ferror(file)) {
-        char c = fgetc(file);
+    for (size_t i = 0; i < filebuf->size; ++i) {
+        char c = (char)filebuf->bytes[i];
         //log("c: %c aka %d", c, c);
         switch (c) {
         case ' ':
         case '#':
         case '\t':
-            skip_line(file);
+            skip_line(filebuf, &i);
             break;
         case '\n':
             // consumed, move on
@@ -140,14 +138,14 @@ bool parse_obj_file(const char* filename, Mesh* mesh) {
         case 'v': {
             // could be 'v' straight, 'vt' or 'vn', gets complicated,
             // handle_v does that
-            bool res = handle_v(file, mesh);
+            bool res = handle_v(filebuf, &i, mesh);
             if (!res) {
                 return false;
             }
             break;
         }
         case 'f': {
-            bool res = handle_f(file, mesh);
+            bool res = handle_f(filebuf, &i, mesh);
             if (!res) {
                 return false;
             }
@@ -155,7 +153,7 @@ bool parse_obj_file(const char* filename, Mesh* mesh) {
         }
         default:
             // FIXME
-            skip_line(file);
+            skip_line(filebuf, &i);
             break;
         }
     }

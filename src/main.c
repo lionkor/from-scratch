@@ -86,7 +86,6 @@ static void main_loop(XGLEnvironment* env) {
         f += 0.4;
         glRotated((((int)round(f)) % 360) * 1.0, 0., 1., 0.);
 
-        //gl_draw_mesh(&mesh, env, GL_TRIANGLES);
         gl_draw_mesh(&mesh, env, GL_TRIANGLES);
 
         glXSwapBuffers(env->display, env->window);

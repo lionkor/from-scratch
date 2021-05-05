@@ -109,6 +109,10 @@ void deinit_resource_manager() {
 ByteBuffer* get_resource(const char* name) {
     assert(g_files);
     for (size_t i = 0; i < g_files_count; ++i) {
+        if (strcmp(g_files[i].name, name) == 0) {
+            return &g_files[i].buf;
+        }
     }
+    log("not found in resources: %s", name);
     return NULL;
 }
