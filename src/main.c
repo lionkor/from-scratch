@@ -1,4 +1,6 @@
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #include <assert.h>
 #include <math.h>
@@ -32,6 +34,15 @@ enum {
     WIN_BORDER = 0,
 };
 
+static void handle_key(XEvent* event, bool* shutdown) {
+    assert(event);
+    assert(shutdown);
+    if (XLookupKeysym(&event->xkey, 0) == XK_Escape) {
+        log("exiting via escape-key");
+        *shutdown = true;
+    }
+}
+
 static void main_loop(XGLEnvironment* env) {
     assert(env);
     XEvent event;
@@ -48,24 +59,27 @@ static void main_loop(XGLEnvironment* env) {
             XNextEvent(env->display, &event);
             switch (event.type) {
             case KeyPress:
-                //break;
+                handle_key(&event, &shutdown);
+                break;
             case ClientMessage:
                 shutdown = true;
                 break;
             case Expose:
                 break;
+            default:
+                log("unhandled case: 0x04%x", event.type);
             }
         }
         XGetWindowAttributes(env->display, env->window, &env->gwa);
         glViewport(0, 0, env->gwa.width, env->gwa.height);
 
         static double f = 0;
-        glClearColor(1.0, 1.0, 1.0, 1.0);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        gluPerspective(50.0, (double)WIN_W / ((double)WIN_H), 0.01, 100.0);
+        gluPerspective(50.0, (double)env->gwa.width / ((double)env->gwa.height), 0.01, 100.0);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
         gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
@@ -127,6 +141,10 @@ static void init(XGLEnvironment* env) {
     env->glc = glXCreateContext(env->display, env->vi, NULL, GL_TRUE);
     glXMakeCurrent(env->display, env->window, env->glc);
     glEnable(GL_DEPTH_TEST);
+
+    XGetWindowAttributes(env->display, env->window, &env->gwa);
+    env->width = env->gwa.width;
+    env->height = env->gwa.height;
 }
 
 static void deinit(XGLEnvironment* env) {

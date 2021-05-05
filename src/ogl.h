@@ -31,6 +31,7 @@ typedef struct {
     Window window;
     XWindowAttributes gwa;
     GLXContext glc;
+    int width, height;
 } XGLEnvironment;
 
 void gl_draw_mesh(Mesh* mesh, XGLEnvironment* env, GLenum type);
