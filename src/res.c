@@ -6,7 +6,7 @@
 
 #include "io.h"
 
-char res_path[256];
+char res_path[257];
 bool is_set = false;
 
 void set_resource_folder(const char* folder_path) {
@@ -26,7 +26,7 @@ void set_resource_folder(const char* folder_path) {
     if (!(S_ISDIR(st.st_mode))) {
         log("\"%s\" is not a directory, cannot be resource folder, resource folder will remain current working directory", folder_path);
     }
-    memcpy(res_path, folder_path, folder_path_len);
+    strcpy(res_path, folder_path);
     if (res_path[folder_path_len - 1] != '/') {
         log("new resource folder path doesn't end with '/', appending");
         assert(folder_path_len < sizeof(res_path));

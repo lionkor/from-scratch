@@ -19,6 +19,7 @@
 #define deg_to_rad(angledegrees) ((angledegrees)*M_PI / 180.0)
 #define rad_to_deg(angleradians) ((angleradians)*180.0 / M_PI)
 
+#include "camera.h"
 #include "err.h"
 #include "format_obj.h"
 #include "io.h"
@@ -34,13 +35,25 @@ enum {
     WIN_BORDER = 0,
 };
 
-static void handle_key(XEvent* event, bool* shutdown) {
+// returns whether it has handled the event (false = ignored)
+static bool handle_key(XEvent* event, bool* shutdown, Camera* camera) {
     assert(event);
     assert(shutdown);
-    if (XLookupKeysym(&event->xkey, 0) == XK_Escape) {
+    switch (XLookupKeysym(&event->xkey, 0)) {
+    case XK_Escape:
         log("exiting via escape-key");
         *shutdown = true;
+        break;
+    case XK_Up:
+        move_camera(camera, &camera->forward, 10.0);
+        break;
+    case XK_Down:
+        break;
+    default:
+        // not handled
+        return false;
     }
+    return true;
 }
 
 static void main_loop(XGLEnvironment* env) {
@@ -54,13 +67,20 @@ static void main_loop(XGLEnvironment* env) {
         log("parsing failed");
         exit(1); // FIXME
     }
+    Camera cam;
+    init_camera(&cam);
+    cam.pos = { 0.0, 0.0, 10.0 };
+    Vec3 origin = { 0.0, 0.0, 0.0 };
+    camera_look_at(&origin);
     while (!shutdown) {
         if (XPending(env->display)) {
             XNextEvent(env->display, &event);
             switch (event.type) {
-            case KeyPress:
-                handle_key(&event, &shutdown);
+            case KeyPress: {
+                bool handled = handle_key(&event, &shutdown);
+                (void)handled;
                 break;
+            }
             case ClientMessage:
                 shutdown = true;
                 break;
@@ -79,11 +99,21 @@ static void main_loop(XGLEnvironment* env) {
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        gluPerspective(50.0, (double)env->gwa.width / ((double)env->gwa.height), 0.01, 100.0);
+        GLdouble fovy = 50.0;
+        const GLdouble clip_near = 0.01;
+        const GLdouble clip_far = 100.0;
+        gluPerspective(fovy, (double)env->gwa.width / ((double)env->gwa.height), clip_near, clip_far);
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        gluLookAt(0., 0., 10., 0., 0., 0., 0., 1., 0.);
-        f += 0.4;
+        Vec3 eye = {
+            0.0,
+            0.0,
+        };
+        Vec3 center = { 0.0, 0.0, 0.0 };
+        Vec3 up = { 0.0, 1.0, 0.0 };
+        gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
+        double rotation_speed = 0.4;
+        f += rotation_speed;
         glRotated((((int)round(f)) % 360) * 1.0, 0., 1., 0.);
 
         gl_draw_mesh(&mesh, env, GL_TRIANGLES);

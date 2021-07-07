@@ -12,4 +12,4 @@ order.
 Linux + X11 only.
 
 1. `make` to compile
-2. `./bin/from-scratch` to run
+2. `./bin/from-scratch` to run 
