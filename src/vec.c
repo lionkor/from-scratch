@@ -89,3 +89,22 @@ bool vec3_equals(const Vec3* veca, const Vec3* vecb, double epsilon) {
     bool z_eq = fabs(veca->z - vecb->z) < epsilon;
     return x_eq && y_eq && z_eq;
 }
+
+Vec3 vec3_add_vec3_copy(const Vec3* veca, const Vec3* vecb) {
+    return (Vec3) {
+        .x = veca->x + vecb->x,
+        .y = veca->y + vecb->y,
+        .z = veca->z + vecb->z
+    };
+}
+
+Vec3 vec3_sub_vec3_copy(const Vec3* veca, const Vec3* vecb) {
+    return (Vec3) {
+        .x = veca->x - vecb->x,
+        .y = veca->y - vecb->y,
+        .z = veca->z - vecb->z
+    };
+}
+
+void vec3_rotate_by(const Vec3* vec, double degrees) {
+}

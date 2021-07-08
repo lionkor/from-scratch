@@ -45,9 +45,12 @@ static bool handle_key(XEvent* event, bool* shutdown, Camera* camera) {
         *shutdown = true;
         break;
     case XK_Up:
-        move_camera(camera, &camera->forward, 10.0);
+        plog("UP!");
+        move_camera(camera, &camera->forward, 1.0);
         break;
     case XK_Down:
+        plog("DOWN!");
+        move_camera(camera, &camera->forward, -1.0);
         break;
     default:
         // not handled
@@ -68,9 +71,11 @@ static void main_loop(XGLEnvironment* env) {
         exit(1); // FIXME
     }
     Camera* cam = new_camera();
-    cam->pos = (Vec3) { 0.0, 0.0, 10.0 };
+    cam->pos = (Vec3) { 0.0, -5.0, 0.0 };
+    //cam->forward = (Vec3) { 1.0, 0.0, 0.0 };
     Vec3 origin = { 0.0, 0.0, 0.0 };
     camera_look_at(cam, &origin);
+    plog_camera(cam);
     while (!shutdown) {
         if (XPending(env->display)) {
             XNextEvent(env->display, &event);
@@ -102,26 +107,25 @@ static void main_loop(XGLEnvironment* env) {
         const GLdouble clip_near = 0.01;
         const GLdouble clip_far = 100.0;
         gluPerspective(fovy, (double)env->gwa.width / ((double)env->gwa.height), clip_near, clip_far);
+        double rotation_speed = 0.4;
+        vec3_rotate_by(rotation_speed);
+        // TODO: rotate camera
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
-        Vec3 eye = {
-            0.0,
-            0.0,
-            0.0
-        };
-        Vec3 center = { 0.0, 0.0, 0.0 };
-        Vec3 up = { 0.0, 1.0, 0.0 };
-        gluLookAt(eye.x, eye.y, eye.z, center.x, center.y, center.z, up.x, up.y, up.z);
-        double rotation_speed = 0.4;
-        f += rotation_speed;
-        glRotated((((int)round(f)) % 360) * 1.0, 0., 1., 0.);
+        glRotatef(cam->forward.x, 1, 0, 0);
+        glRotatef(cam->forward.z, 0, 1, 0);
+        glRotatef(cam->forward.y, 0, 0, 1);
+        glTranslatef(cam->pos.x,
+            cam->pos.z,
+            cam->pos.y);
+        // glRotated((((int)round(f)) % 360) * 1.0, 0., 1., 0.);
 
         gl_draw_mesh(&mesh, env, GL_TRIANGLES);
 
         glXSwapBuffers(env->display, env->window);
     }
     deallocate_mesh(&mesh);
-    free_camera(cam);
+    free_camera(&cam);
 }
 
 static void init(XGLEnvironment* env) {
