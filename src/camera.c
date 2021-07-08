@@ -28,6 +28,6 @@ void free_camera(Camera** cam) {
 }
 
 void plog_camera(const Camera* cam) {
-    plog("Camera forward: %0.2f, %0.2f, %0.2f\n", cam->forward.x, cam->forward.y, cam->forward.z);
-    plog("Camera pos:     %0.2f, %0.2f, %0.2f\n", cam->pos.x, cam->pos.y, cam->pos.z);
+    plog("Camera forward: %+0.2f, %+0.2f, %+0.2f", cam->forward.x, cam->forward.y, cam->forward.z);
+    plog("Camera pos:     %+0.2f, %+0.2f, %+0.2f", cam->pos.x, cam->pos.y, cam->pos.z);
 }

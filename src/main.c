@@ -56,6 +56,7 @@ static bool handle_key(XEvent* event, bool* shutdown, Camera* camera) {
         // not handled
         return false;
     }
+    plog_camera(camera);
     return true;
 }
 
@@ -108,7 +109,6 @@ static void main_loop(XGLEnvironment* env) {
         const GLdouble clip_far = 100.0;
         gluPerspective(fovy, (double)env->gwa.width / ((double)env->gwa.height), clip_near, clip_far);
         double rotation_speed = 0.4;
-        vec3_rotate_by(rotation_speed);
         // TODO: rotate camera
         glMatrixMode(GL_MODELVIEW);
         glLoadIdentity();
