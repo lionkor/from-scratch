@@ -14,26 +14,26 @@ void set_resource_folder(const char* folder_path) {
     size_t folder_path_len = strlen(folder_path);
     memset(res_path, 0, sizeof(res_path));
     if (folder_path_len > sizeof(res_path)) {
-        log("warning: resource folder path too long, will cause issues");
+        plog("warning: resource folder path too long, will cause issues");
     }
     struct stat st;
     int res = stat(folder_path, &st);
     if (res != 0) {
         log_perror("stat");
-        log("\"%s\" is not a valid path, resource folder will remain current working directory", folder_path);
+        plog("\"%s\" is not a valid path, resource folder will remain current working directory", folder_path);
         return;
     }
     if (!(S_ISDIR(st.st_mode))) {
-        log("\"%s\" is not a directory, cannot be resource folder, resource folder will remain current working directory", folder_path);
+        plog("\"%s\" is not a directory, cannot be resource folder, resource folder will remain current working directory", folder_path);
     }
     strcpy(res_path, folder_path);
     if (res_path[folder_path_len - 1] != '/') {
-        log("new resource folder path doesn't end with '/', appending");
+        plog("new resource folder path doesn't end with '/', appending");
         assert(folder_path_len < sizeof(res_path));
         res_path[folder_path_len] = '/';
     }
     is_set = true;
-    log("set resource folder to \"%s\"", res_path);
+    plog("set resource folder to \"%s\"", res_path);
 }
 
 const char* get_resource_folder() {
@@ -52,7 +52,7 @@ ByteBuffer make_res_path(const char* filename) {
     memcpy(path.bytes + 0, res, res_len);
     memcpy(path.bytes + res_len, filename, fn_len);
     path.bytes[path.size - 1] = 0; // null-terminate
-    log("resolved full res path: \"%s\"", path.bytes);
+    plog("resolved full res path: \"%s\"", path.bytes);
     return path;
 }
 
@@ -73,14 +73,14 @@ size_t g_files_count = 0;
 
 void init_resource_manager() {
     if (g_files) {
-        log("resource manager already initialized, deinitializing and reinitializing");
+        plog("resource manager already initialized, deinitializing and reinitializing");
         deinit_resource_manager();
     }
     // list all files in resource folder
     const char* folder = get_resource_folder();
     FileNameList list = get_files_in_directory(folder);
     if (list.size == 0) {
-        log("warning: resource folder \"%s\" is empty", folder);
+        plog("warning: resource folder \"%s\" is empty", folder);
     }
     g_files = allocate(list.size * sizeof(NamedBuffer));
     g_files_count = list.size;
@@ -88,7 +88,7 @@ void init_resource_manager() {
         memcpy(g_files[i].name, list.names[i].bytes, list.names[i].size);
         bool ok = read_entire_file(g_files[i].name, &g_files[i].buf);
         if (!ok) {
-            log("failed to read resource \"%s\"", g_files[i].name);
+            plog("failed to read resource \"%s\"", g_files[i].name);
         }
     }
     deallocate_filenames(&list);
@@ -96,13 +96,13 @@ void init_resource_manager() {
 
 void deinit_resource_manager() {
     if (g_files) {
-        log("deallocating resources");
+        plog("deallocating resources");
         for (size_t i = 0; i < g_files_count; ++i) {
             deallocate_byte_buffer(&g_files[i].buf);
         }
         deallocate((void**)&g_files);
     } else {
-        log("resource manager deinitializing, even though it is not initialized");
+        plog("resource manager deinitializing, even though it is not initialized");
     }
 }
 
@@ -113,6 +113,6 @@ ByteBuffer* get_resource(const char* name) {
             return &g_files[i].buf;
         }
     }
-    log("not found in resources: %s", name);
+    plog("not found in resources: %s", name);
     return NULL;
 }

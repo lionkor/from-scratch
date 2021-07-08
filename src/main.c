@@ -41,7 +41,7 @@ static bool handle_key(XEvent* event, bool* shutdown, Camera* camera) {
     assert(shutdown);
     switch (XLookupKeysym(&event->xkey, 0)) {
     case XK_Escape:
-        log("exiting via escape-key");
+        plog("exiting via escape-key");
         *shutdown = true;
         break;
     case XK_Up:
@@ -64,20 +64,19 @@ static void main_loop(XGLEnvironment* env) {
     Mesh mesh;
     bool ok = parse_obj_file("data/test2.obj", &mesh);
     if (!ok) {
-        log("parsing failed");
+        plog("parsing failed");
         exit(1); // FIXME
     }
-    Camera cam;
-    init_camera(&cam);
-    cam.pos = { 0.0, 0.0, 10.0 };
+    Camera* cam = new_camera();
+    cam->pos = (Vec3) { 0.0, 0.0, 10.0 };
     Vec3 origin = { 0.0, 0.0, 0.0 };
-    camera_look_at(&origin);
+    camera_look_at(cam, &origin);
     while (!shutdown) {
         if (XPending(env->display)) {
             XNextEvent(env->display, &event);
             switch (event.type) {
             case KeyPress: {
-                bool handled = handle_key(&event, &shutdown);
+                bool handled = handle_key(&event, &shutdown, cam);
                 (void)handled;
                 break;
             }
@@ -87,7 +86,7 @@ static void main_loop(XGLEnvironment* env) {
             case Expose:
                 break;
             default:
-                log("unhandled case: 0x04%x", event.type);
+                plog("unhandled case: 0x04%x", event.type);
             }
         }
         XGetWindowAttributes(env->display, env->window, &env->gwa);
@@ -108,6 +107,7 @@ static void main_loop(XGLEnvironment* env) {
         Vec3 eye = {
             0.0,
             0.0,
+            0.0
         };
         Vec3 center = { 0.0, 0.0, 0.0 };
         Vec3 up = { 0.0, 1.0, 0.0 };
@@ -121,13 +121,14 @@ static void main_loop(XGLEnvironment* env) {
         glXSwapBuffers(env->display, env->window);
     }
     deallocate_mesh(&mesh);
+    free_camera(cam);
 }
 
 static void init(XGLEnvironment* env) {
     assert(env);
     env->display = XOpenDisplay(NULL);
     if (!env->display) {
-        log("X: cannot open display");
+        plog("X: cannot open display");
         exit(1);
     }
     env->screen = DefaultScreen(env->display);
@@ -135,7 +136,7 @@ static void init(XGLEnvironment* env) {
     env->att = (GLint[]) { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
     env->vi = glXChooseVisual(env->display, 0, env->att);
     if (!env->vi) {
-        log("glX: no visual found");
+        plog("glX: no visual found");
         exit(1);
     }
     env->cmap = XCreateColormap(env->display, env->root, env->vi->visual, AllocNone);
@@ -146,15 +147,15 @@ static void init(XGLEnvironment* env) {
         env->vi->depth, InputOutput, env->vi->visual,
         CWColormap | CWEventMask, &env->swa);
 
-    log("x properties:");
-    log("\tscreen dim (px)   : %dx%d", XDisplayWidth(env->display, env->screen), XDisplayHeight(env->display, env->screen));
-    log("\tscreen dim (mm)   : %dmm x %dmm", XDisplayWidthMM(env->display, env->screen), XDisplayHeightMM(env->display, env->screen));
-    log("\tdepth             : %d", XDefaultDepth(env->display, env->screen));
-    log("\tdisplay           : %s", XDisplayString(env->display));
-    log("\tprotocol version  : %d.%d", XProtocolVersion(env->display), XProtocolRevision(env->display));
-    log("\tserver vendor     : %s", XServerVendor(env->display));
-    log("gl properties:");
-    log("\tselected visual   : %p", (void*)env->vi->visualid);
+    plog("x properties:");
+    plog("\tscreen dim (px)   : %dx%d", XDisplayWidth(env->display, env->screen), XDisplayHeight(env->display, env->screen));
+    plog("\tscreen dim (mm)   : %dmm x %dmm", XDisplayWidthMM(env->display, env->screen), XDisplayHeightMM(env->display, env->screen));
+    plog("\tdepth             : %d", XDefaultDepth(env->display, env->screen));
+    plog("\tdisplay           : %s", XDisplayString(env->display));
+    plog("\tprotocol version  : %d.%d", XProtocolVersion(env->display), XProtocolRevision(env->display));
+    plog("\tserver vendor     : %s", XServerVendor(env->display));
+    plog("gl properties:");
+    plog("\tselected visual   : %p", (void*)env->vi->visualid);
 
     // process window close event through event handler
     Atom del_window = XInternAtom(env->display, "WM_DELETE_WINDOW", 0);
@@ -186,17 +187,17 @@ static void deinit(XGLEnvironment* env) {
 
 int main(int argc, char** argv) {
     if (argc != 1) {
-        log("%s takes no arguments.\n", argv[0]);
+        plog("%s takes no arguments.\n", argv[0]);
         return 1;
     }
     set_resource_folder("data");
     init_resource_manager();
     XGLEnvironment* env = allocate(sizeof(XGLEnvironment));
-    log("initializing...");
+    plog("initializing...");
     init(env);
-    log("main loop...");
+    plog("main loop...");
     main_loop(env);
-    log("closing normally...");
+    plog("closing normally...");
     deinit(env);
     deallocate((void**)&env);
     deinit_resource_manager();

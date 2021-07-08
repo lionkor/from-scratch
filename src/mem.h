@@ -12,7 +12,7 @@ typedef struct {
 NODISCARD void* allocate(size_t n);
 void deallocate(void** ptr_ptr);
 NODISCARD bool reallocate(void** ptr, size_t new_size);
-size_t allocated();
+size_t allocated(void);
 
 NODISCARD OwnPtr safe_allocate(size_t n);
 void safe_deallocate(OwnPtr* ownptr);

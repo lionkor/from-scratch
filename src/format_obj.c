@@ -42,7 +42,7 @@ static bool handle_vertex(ByteBuffer* filebuf, size_t* i, Mesh* mesh) {
         bool ok = reallocate((void**)&mesh->vertices, (mesh->vertex_count + 1) * sizeof(MeshVertex));
         mesh->vertex_count += 1;
         if (!ok) {
-            log("reallocate failed, cannot continue (out of memory?)");
+            plog("reallocate failed, cannot continue (out of memory?)");
             return false;
         }
     }
@@ -52,7 +52,7 @@ static bool handle_vertex(ByteBuffer* filebuf, size_t* i, Mesh* mesh) {
         size_t maybe_number_len;
         char* maybe_number = read_until_space(filebuf, i, &maybe_number_len);
         if (maybe_number_len == 0) {
-            log("expected vertex number %lu, got eof, error, space or similar instead", k);
+            plog("expected vertex number %lu, got eof, error, space or similar instead", k);
             return false;
         }
         // FIXME: we're assuming this just works, does it? check the return.
@@ -72,7 +72,7 @@ static bool handle_v(ByteBuffer* filebuf, size_t* i, Mesh* mesh) {
         // not handled
         return true;
     default:
-        log("v%c is unknown, (is this file well-formed?) ignoring for now", c);
+        plog("v%c is unknown, (is this file well-formed?) ignoring for now", c);
         return true;
     }
     return true;
@@ -81,7 +81,7 @@ static bool handle_v(ByteBuffer* filebuf, size_t* i, Mesh* mesh) {
 static bool handle_f(ByteBuffer* filebuf, size_t* i, Mesh* mesh) {
     char should_be_space = (char)filebuf->bytes[++(*i)];
     if (should_be_space != ' ') {
-        log("expected space, got %c (%d)", should_be_space, should_be_space);
+        plog("expected space, got %c (%d)", should_be_space, should_be_space);
         return false;
     }
     if (mesh->face_elements == NULL) {
@@ -91,7 +91,7 @@ static bool handle_f(ByteBuffer* filebuf, size_t* i, Mesh* mesh) {
         bool ok = reallocate((void**)&mesh->face_elements, (mesh->face_element_count + 1) * sizeof(FaceElement));
         mesh->face_element_count += 1;
         if (!ok) {
-            log("reallocate failed, cannot continue (out of memory?)");
+            plog("reallocate failed, cannot continue (out of memory?)");
             return false;
         }
     }
@@ -101,7 +101,7 @@ static bool handle_f(ByteBuffer* filebuf, size_t* i, Mesh* mesh) {
         size_t maybe_number_len;
         char* maybe_number = read_until_space(filebuf, i, &maybe_number_len);
         if (maybe_number_len == 0) {
-            log("expected vertex number %lu, got eof, error, space or similar instead", k);
+            plog("expected vertex number %lu, got eof, error, space or similar instead", k);
             return false;
         }
         // FIXME: we're assuming this just works, does it? check the return.
@@ -120,7 +120,7 @@ bool parse_obj_file(const char* filename, Mesh* mesh) {
     memset(mesh, 0, sizeof(Mesh));
     ByteBuffer* filebuf = get_resource(filename);
     if (!filebuf || filebuf->size == 0) {
-        log("file \"%s\" isn't a good obj file.", filename);
+        plog("file \"%s\" isn't a good obj file.", filename);
         return false;
     }
     for (size_t i = 0; i < filebuf->size; ++i) {

@@ -21,7 +21,7 @@ void vec3_div_d(Vec3* vec, double d) {
 
 void vec3_div_vec3(Vec3* veca, const Vec3* vecb) {
 #ifndef VEC3_DIV_VEC3_OK
-    log("warning: vec3/vec3 was invoked - this is likely not what you want. define 'VEC3_DIV_VEC3_OK' to disable this warning.");
+    plog("warning: vec3/vec3 was invoked - this is likely not what you want. define 'VEC3_DIV_VEC3_OK' to disable this warning.");
 #endif
     veca->x /= vecb->x;
     veca->y /= vecb->y;
@@ -36,7 +36,7 @@ void vec3_mul_d(Vec3* vec, double d) {
 
 void vec3_mul_vec3(Vec3* veca, const Vec3* vecb) {
 #ifndef VEC3_MUL_VEC3_OK
-    log("warning: vec3*vec3 was invoked - this is likely not what you want. define 'VEC3_MUL_VEC3_OK' to disable this warning.");
+    plog("warning: vec3*vec3 was invoked - this is likely not what you want. define 'VEC3_MUL_VEC3_OK' to disable this warning.");
 #endif
     veca->x *= vecb->x;
     veca->y *= vecb->y;
@@ -45,7 +45,7 @@ void vec3_mul_vec3(Vec3* veca, const Vec3* vecb) {
 
 void vec3_add_d(Vec3* vec, double d) {
 #ifndef VEC3_ADD_D_OK
-    log("warning: vec3+d was invoked - this is likely not what you want. define 'VEC3_ADD_D_OK' to disable this warning.");
+    plog("warning: vec3+d was invoked - this is likely not what you want. define 'VEC3_ADD_D_OK' to disable this warning.");
 #endif
     vec->x += d;
     vec->y += d;
@@ -66,7 +66,7 @@ double vec3_length_squared(const Vec3* vec) {
 
 void vec3_sub_d(Vec3* vec, double d) {
 #ifndef VEC3_SUB_D_OK
-    log("warning: vec3-d was invoked - this is likely not what you want. define 'VEC3_SUB_D_OK' to disable this warning.");
+    plog("warning: vec3-d was invoked - this is likely not what you want. define 'VEC3_SUB_D_OK' to disable this warning.");
 #endif
     vec->x -= d;
     vec->y -= d;

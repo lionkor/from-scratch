@@ -6,19 +6,19 @@ typedef struct {
     double x, y, z;
 } Vec3;
 
-inline double vec3_length(const Vec3* vec);
-inline double vec3_length_squared(const Vec3* vec);
-inline void vec3_normalize(Vec3* vec);
-inline void vec3_div_d(Vec3* vec, double d);
-inline void vec3_div_vec3(Vec3* veca, const Vec3* vecb);
-inline void vec3_mul_d(Vec3* vec, double d);
-inline void vec3_mul_vec3(Vec3* veca, const Vec3* vecb);
-inline void vec3_add_d(Vec3* vec, double d);
-inline void vec3_add_vec3(Vec3* veca, const Vec3* vecb);
-inline void vec3_sub_d(Vec3* vec, double d);
-inline void vec3_sub_vec3(Vec3* veca, const Vec3* vecb);
-inline bool vec3_is_unit_vector(const Vec3* vec, double epsilon);
-inline bool vec3_equals(const Vec3* veca, const Vec3* vecb, double epsilon);
+double vec3_length(const Vec3* vec);
+double vec3_length_squared(const Vec3* vec);
+void vec3_normalize(Vec3* vec);
+void vec3_div_d(Vec3* vec, double d);
+void vec3_div_vec3(Vec3* veca, const Vec3* vecb);
+void vec3_mul_d(Vec3* vec, double d);
+void vec3_mul_vec3(Vec3* veca, const Vec3* vecb);
+void vec3_add_d(Vec3* vec, double d);
+void vec3_add_vec3(Vec3* veca, const Vec3* vecb);
+void vec3_sub_d(Vec3* vec, double d);
+void vec3_sub_vec3(Vec3* veca, const Vec3* vecb);
+bool vec3_is_unit_vector(const Vec3* vec, double epsilon);
+bool vec3_equals(const Vec3* veca, const Vec3* vecb, double epsilon);
 
 #define vec3_div(vec, x) _Generic((x),          \
                                   double        \

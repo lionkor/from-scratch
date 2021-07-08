@@ -2,7 +2,9 @@
 
 #include <assert.h>
 #include <dirent.h>
+#include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -17,13 +19,13 @@ bool read_entire_file(const char* filename, ByteBuffer* buf) {
     }
     size_t size = st.st_size;
     if (size == 0) {
-        log("warning: file \"%s\" is empty, buffer will be NULL", filename);
+        plog("warning: file \"%s\" is empty, buffer will be NULL", filename);
         buf->bytes = NULL;
         buf->size = 0;
         return true;
     }
     if (!(S_ISREG(st.st_mode))) {
-        log("error: \"%s\" is not a regular file", filename);
+        plog("error: \"%s\" is not a regular file", filename);
         return false;
     }
     FILE* file = fopen(filename, "rb");
@@ -35,14 +37,14 @@ bool read_entire_file(const char* filename, ByteBuffer* buf) {
     size_t n_read = fread(buf->bytes, 1, buf->size, file);
     fclose(file);
     if (n_read != buf->size) {
-        log("warning: read unexpected amount of data from \"%s\" - expected to read %lu, instead read %lu bytes", filename, size, n_read);
+        plog("warning: read unexpected amount of data from \"%s\" - expected to read %lu, instead read %lu bytes", filename, size, n_read);
         // FIXME: what now?
     }
     return true;
 }
 
 static inline void get_files_in_directory_recursive(FileNameList* files, const char* dir_path) {
-    log("getting files in \"%s\"", dir_path);
+    plog("getting files in \"%s\"", dir_path);
     DIR* d;
     struct dirent* dir;
     d = opendir(dir_path);
